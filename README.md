@@ -1,6 +1,6 @@
 <div align="center">
 
-![Project Celio Banner](https://raw.githubusercontent.com/lovenityjade/projectcelio/main/assets/banner_placeholder.png)
+![Project Celio Banner](https://themiareproject.com/celio-banner.png)
 # PROJECT CELIO
 ### The Network Center is Online.
 
