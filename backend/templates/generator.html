@@ -1,0 +1,309 @@
+{% extends "base.html" %}
+{% block title %}Celio Studio Pro{% endblock %}
+
+{% block content %}
+<div class="studio-wrapper">
+    <header class="studio-head">
+        <div class="brand">
+            <h1>CELIO <span class="highlight">STUDIO</span></h1>
+            <p>Moteur de Fusion Multiworld v2.1</p>
+        </div>
+        <div class="actions">
+            <button class="btn-tool" onclick="exportConfig()" title="Exporter en JSON"><i class="fa-solid fa-download"></i> Sauvegarder</button>
+            <label class="btn-tool" title="Importer JSON">
+                <i class="fa-solid fa-upload"></i> Charger
+                <input type="file" hidden onchange="importConfig(this)" accept=".json">
+            </label>
+        </div>
+    </header>
+
+    <div class="studio-grid">
+        <aside class="sidebar card">
+            <h3><i class="fa-solid fa-microchip"></i> Cartouches</h3>
+            <div class="rom-item">
+                <div class="rom-header"><span>Emerald (US)</span> <span id="st_em" class="badge">REQ</span></div>
+                <label class="upload-btn"><input type="file" id="f_em" onchange="up('emerald')" accept=".gba"> <i class="fa-regular fa-folder-open"></i> Choisir</label>
+            </div>
+            <div class="rom-item">
+                <div class="rom-header"><span>FireRed (US 1.0)</span> <span id="st_fr" class="badge">REQ</span></div>
+                <label class="upload-btn"><input type="file" id="f_fr" onchange="up('frlg')" accept=".gba"> <i class="fa-regular fa-folder-open"></i> Choisir</label>
+            </div>
+            <div class="footer">
+                <div id="g-status" class="status-msg">En attente...</div>
+                <button id="btn-gen" class="btn-main" onclick="generate()" disabled>LANCER LA FUSION</button>
+            </div>
+        </aside>
+
+        <main class="configurator card">
+            <div class="game-tabs">
+                <button class="tab-game active" onclick="setGame('emerald')"><img src="https://img.icons8.com/color/48/emerald.png"> Emerald</button>
+                <button class="tab-game" onclick="setGame('frlg')"><img src="https://img.icons8.com/color/48/fire-element.png"> FireRed</button>
+            </div>
+            
+            <div class="cat-tabs" id="cat-container"></div>
+
+            <div class="form-area custom-scroll" id="form-container"></div>
+        </main>
+    </div>
+</div>
+
+<div id="overlay" class="overlay">
+    <div class="modal">
+        <div class="icon-ok"><i class="fa-solid fa-check"></i></div>
+        <h2>Fusion Terminée !</h2>
+        <a id="dl-link" href="#" class="btn-dl">Télécharger .celio</a>
+        <button onclick="document.getElementById('overlay').style.display='none'" class="btn-text">Fermer</button>
+    </div>
+</div>
+
+<style>
+:root { --bg: #0b0e14; --card: #151922; --border: #2a2f3a; --primary: #6366f1; --accent: #ec4899; --text: #e2e8f0; --muted: #64748b; }
+body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
+.studio-wrapper { max-width: 1600px; margin: 0 auto; padding: 1rem; height: 100%; display: flex; flex-direction: column; }
+
+/* Header */
+.studio-head { display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+.brand h1 { margin: 0; font-size: 1.5rem; letter-spacing: 1px; }
+.highlight { color: var(--primary); }
+.btn-tool { background: #1e293b; border: 1px solid var(--border); color: var(--muted); padding: 8px 16px; border-radius: 6px; cursor: pointer; display: flex; gap: 8px; align-items: center; transition: 0.2s; }
+.btn-tool:hover { color: white; border-color: var(--primary); }
+
+/* Layout */
+.studio-grid { display: grid; grid-template-columns: 300px 1fr; gap: 1.5rem; flex: 1; min-height: 0; margin-top: 1rem; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
+
+/* Sidebar */
+.sidebar { padding: 1.5rem; }
+.sidebar h3 { margin-top: 0; color: var(--muted); font-size: 0.9rem; text-transform: uppercase; }
+.rom-item { background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid var(--border); }
+.rom-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.85rem; margin-bottom: 0.5rem; }
+.badge { font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: #ef4444; color: white; }
+.badge.ok { background: #10b981; }
+.upload-btn { display: block; background: rgba(255,255,255,0.03); text-align: center; padding: 8px; border-radius: 6px; cursor: pointer; border: 1px dashed var(--border); font-size: 0.85rem; transition: 0.2s; }
+.upload-btn:hover { background: rgba(255,255,255,0.08); color: white; border-color: var(--muted); }
+.upload-btn input { display: none; }
+.footer { margin-top: auto; }
+.status-msg { text-align: center; font-size: 0.8rem; color: var(--muted); margin-bottom: 10px; }
+.btn-main { width: 100%; background: linear-gradient(135deg, var(--primary), var(--accent)); border: none; padding: 12px; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; transition: 0.2s; }
+.btn-main:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
+
+/* Configurator */
+.game-tabs { display: flex; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2); }
+.tab-game { flex: 1; background: transparent; border: none; padding: 1rem; color: var(--muted); cursor: pointer; display: flex; gap: 10px; align-items: center; justify-content: center; font-size: 1rem; border-bottom: 3px solid transparent; transition: 0.2s; }
+.tab-game.active { color: white; border-bottom-color: var(--primary); background: rgba(99, 102, 241, 0.05); }
+.tab-game img { width: 24px; filter: grayscale(1); transition: 0.2s; }
+.tab-game.active img { filter: grayscale(0); }
+
+.cat-tabs { display: flex; padding: 10px 20px; gap: 10px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tab-cat { background: transparent; border: 1px solid transparent; color: var(--muted); padding: 6px 16px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 0.9rem; transition: 0.2s; }
+.tab-cat:hover { color: white; background: rgba(255,255,255,0.05); }
+.tab-cat.active { background: var(--primary); color: white; }
+
+.form-area { padding: 2rem; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; align-content: start; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label { font-size: 0.85rem; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.form-ctrl { background: #0f1219; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 6px; font-size: 0.9rem; width: 100%; height: 42px; }
+.form-ctrl:focus { outline: none; border-color: var(--primary); }
+
+/* Tooltip & Scroll */
+.help-icon { color: var(--primary); cursor: help; }
+.custom-scroll::-webkit-scrollbar { width: 6px; }
+.custom-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+
+/* Overlay */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+.modal { background: var(--card); padding: 3rem; border-radius: 16px; text-align: center; border: 1px solid var(--primary); width: 400px; }
+.icon-ok { font-size: 3rem; color: #10b981; margin-bottom: 1rem; }
+.btn-dl { display: inline-block; background: #10b981; color: #000; font-weight: bold; padding: 12px 30px; border-radius: 50px; text-decoration: none; margin: 1.5rem 0; }
+.btn-text { background: none; border: none; color: var(--muted); text-decoration: underline; cursor: pointer; }
+</style>
+
+<script>
+// --- LE COEUR DU SYSTÈME : SCHEMA COMPLET ---
+// Basé sur tes fichiers HTML et YAML fournis
+const SCHEMA = {
+    emerald: {
+        General: [
+            { id: 'name', label: 'Nom du Joueur', type: 'text', default: 'JoueurEmerald', help: 'Nom affiché dans le jeu.' },
+            { id: 'goal', label: 'Objectif', type: 'select', default: 'champion', options: [
+                {v:'champion', t:'Battre le Champion'}, {v:'steven', t:'Battre Steven'}, {v:'norman', t:'Battre Norman'}, {v:'legendary_hunt', t:'Chasse Légendaires'}
+            ]},
+            { id: 'elite_four_requirement', label: 'Condition Elite 4', type: 'select', default: 'badges', options: [{v:'badges', t:'Badges'}, {v:'gyms', t:'Arènes'}]},
+            { id: 'elite_four_count', label: 'Quantité E4', type: 'number', default: 8, min:0, max:8 },
+            { id: 'norman_requirement', label: 'Condition Norman', type: 'select', default: 'badges', options: [{v:'badges', t:'Badges'}, {v:'gyms', t:'Arènes'}]},
+            { id: 'norman_count', label: 'Quantité Norman', type: 'number', default: 4, min:0, max:8 },
+        ],
+        Randomizer: [
+            { id: 'wild_pokemon', label: 'Pokémon Sauvages', type: 'select', default: 'match_base_stats', options: [
+                {v:'vanilla', t:'Vanilla'}, {v:'match_base_stats', t:'Match Stats'}, {v:'completely_random', t:'Chaos'}
+            ]},
+            { id: 'trainers', label: 'Dresseurs', type: 'select', default: 'vanilla', options: [{v:'vanilla', t:'Vanilla'}, {v:'match_base_stats', t:'Match Stats'}]},
+            { id: 'blind_trainers', label: 'Blind Trainers', type: 'select', default: 'true', help: 'Cache les infos des dresseurs.', options: [{v:'true', t:'Oui'}, {v:'false', t:'Non'}]},
+            { id: 'force_fully_evolved', label: 'Force Evo (Lvl 30+)', type: 'select', default: 'false', options: [{v:'true', t:'Oui'}, {v:'false', t:'Non'}]}
+        ],
+        Items: [
+            { id: 'badges', label: 'Shuffle Badges', type: 'select', default: 'completely_random', help: 'Badges cachés dans le monde.', options: [{v:'completely_random', t:'Oui'}, {v:'vanilla', t:'Non'}]},
+            { id: 'hms', label: 'Shuffle HMs', type: 'select', default: 'completely_random', options: [{v:'completely_random', t:'Oui'}, {v:'vanilla', t:'Non'}]},
+            { id: 'key_items', label: 'Shuffle Key Items', type: 'select', default: 'true', options: [{v:'true', t:'Oui'}, {v:'false', t:'Non'}]},
+            { id: 'overworld_items', label: 'Overworld Items', type: 'select', default: 'true', options: [{v:'true', t:'Oui'}, {v:'false', t:'Non'}]},
+            { id: 'hidden_items', label: 'Hidden Items', type: 'select', default: 'true', options: [{v:'true', t:'Oui'}, {v:'false', t:'Non'}]}
+        ],
+        QoL: [
+            { id: 'exp_modifier', label: 'XP Multiplier (%)', type: 'number', default: 283 },
+            { id: 'turbo_a', label: 'Turbo A', type: 'select', default: 'true', options: [{v:'true', t:'Oui'}, {v:'false', t:'Non'}]},
+            { id: 'guaranteed_catch', label: 'Capture Garantie', type: 'select', default: 'true', options: [{v:'true', t:'Oui'}, {v:'false', t:'Non'}]},
+            { id: 'better_shops', label: 'Meilleurs Magasins', type: 'select', default: 'true', options: [{v:'true', t:'Oui'}, {v:'false', t:'Non'}]},
+            { id: 'free_fly_location', label: 'Vol Débloqué', type: 'select', default: 'false', options: [{v:'true', t:'Oui'}, {v:'false', t:'Non'}]}
+        ]
+    },
+    frlg: {
+        General: [
+            { id: 'name', label: 'Nom du Joueur', type: 'text', default: 'JoueurFRLG' },
+            { id: 'goal', label: 'Objectif', type: 'select', default: 'champion', options: [
+                {v:'champion', t:'Battre le Champion'}, {v:'silph_co', t:'Libérer Sylphe SARL'}, {v:'sevii_island', t:'Îles Sevii'}
+            ]},
+            { id: 'viridian_city_roadblock', label: 'Viridian Roadblock', type: 'select', default: 'early_parcel', options: [
+                {v:'early_parcel', t:'Colis Rapide'}, {v:'open', t:'Ouvert'}, {v:'vanilla', t:'Vanilla'}
+            ]},
+            { id: 'elite_four_requirement', label: 'Condition E4', type: 'select', default: 'badges', options: [{v:'badges', t:'Badges'}, {v:'gyms', t:'Arènes'}]},
+            { id: 'elite_four_count', label: 'Quantité E4', type: 'number', default: 8 }
+        ],
+        Randomizer: [
+            { id: 'wild_pokemon', label: 'Wild Pokémon', type: 'select', default: 'match_base_stats', options: [
+                {v:'vanilla', t:'Vanilla'}, {v:'match_base_stats', t:'Match Stats'}, {v:'completely_random', t:'Chaos'}
+            ]},
+            { id: 'trainers', label: 'Dresseurs', type: 'select', default: 'vanilla', options: [{v:'vanilla', t:'Vanilla'}, {v:'match_base_stats', t:'Match Stats'}]},
+            { id: 'trainersanity', label: 'Trainersanity', type: 'select', default: '0', help: 'Items sur chaque dresseur.', options: [{v:'0', t:'Non'}, {v:'1', t:'Oui'}]},
+            { id: 'starters', label: 'Starters', type: 'select', default: 'match_base_stats', options: [{v:'match_base_stats', t:'Match Stats'}, {v:'vanilla', t:'Vanilla'}]}
+        ],
+        Items: [
+            { id: 'shuffle_badges', label: 'Shuffle Badges', type: 'select', default: 'true', options: [{v:'true', t:'Oui'}, {v:'false', t:'Non'}]},
+            { id: 'shuffle_hidden', label: 'Hidden Items', type: 'select', default: 'nonrecurring', options: [{v:'nonrecurring', t:'Unique'}, {v:'vanilla', t:'Vanilla'}]},
+            { id: 'shopsanity', label: 'Shopsanity', type: 'select', default: 'false', options: [{v:'true', t:'Oui'}, {v:'false', t:'Non'}]},
+            { id: 'prizesanity', label: 'Prizesanity (Casino)', type: 'select', default: 'false', options: [{v:'true', t:'Oui'}, {v:'false', t:'Non'}]},
+            { id: 'dexsanity', label: 'DexSanity', type: 'select', default: '0', options: [{v:'0', t:'Non'}, {v:'1', t:'Oui'}]}
+        ],
+        QoL: [
+            { id: 'Experience Multiplier', label: 'XP Multiplier', type: 'number', default: 300 },
+            { id: 'split_teas', label: 'Tea Split', type: 'select', default: 'false', help: '4 Thés pour les gardes.', options: [{v:'true', t:'Oui'}, {v:'false', t:'Non'}]},
+            { id: 'Guaranteed Catch', label: 'Capture Garantie', type: 'select', default: 'on', options: [{v:'on', t:'Oui'}, {v:'off', t:'Non'}]}
+        ]
+    }
+};
+
+let STATE = JSON.parse(JSON.stringify(SCHEMA));
+let cGame = 'emerald';
+let cCat = 'General';
+
+// --- RENDERING ---
+function renderTabs() {
+    const box = document.getElementById('cat-container'); box.innerHTML = '';
+    Object.keys(SCHEMA[cGame]).forEach(cat => {
+        const b = document.createElement('button');
+        b.className = `tab-cat ${cat===cCat?'active':''}`;
+        b.innerText = cat;
+        b.onclick = () => { cCat = cat; renderTabs(); renderForm(); };
+        box.appendChild(b);
+    });
+}
+
+function renderForm() {
+    const box = document.getElementById('form-container'); box.innerHTML = '';
+    STATE[cGame][cCat].forEach((f, idx) => {
+        const div = document.createElement('div'); div.className = 'form-group';
+        
+        let labelHTML = f.label;
+        if(f.help) labelHTML += ` <span title="${f.help}" class="help-icon"><i class="fa-solid fa-circle-info"></i></span>`;
+        div.innerHTML = `<label class="form-label">${labelHTML}</label>`;
+        
+        let input;
+        if(f.type === 'select') {
+            input = document.createElement('select'); input.className = 'form-ctrl';
+            f.options.forEach(o => {
+                const opt = document.createElement('option'); opt.value = o.v; opt.innerText = o.t;
+                if(f.value !== undefined ? (f.value == o.v) : (f.default == o.v)) opt.selected = true;
+                input.appendChild(opt);
+            });
+        } else {
+            input = document.createElement('input'); input.type = f.type; input.className = 'form-ctrl';
+            input.value = f.value !== undefined ? f.value : f.default;
+        }
+        input.onchange = (e) => { STATE[cGame][cCat][idx].value = e.target.value; };
+        div.appendChild(input); box.appendChild(div);
+    });
+}
+
+function setGame(g) {
+    cGame = g; cCat = 'General';
+    document.querySelectorAll('.tab-game').forEach(b => b.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    renderTabs(); renderForm();
+}
+
+// --- API & LOGIC ---
+function getUID() { let u=localStorage.getItem('uid'); if(!u){u=crypto.randomUUID(); localStorage.setItem('uid',u);} return u; }
+
+async function up(g) {
+    const f = document.getElementById(`f_${g==='emerald'?'em':'fr'}`).files[0];
+    if(!f) return;
+    const fd = new FormData(); fd.append('user_id', getUID()); fd.append(`rom_${g}`, f);
+    document.getElementById('g-status').innerText = "Upload...";
+    await fetch('/api/user/upload', {method:'POST', body:fd});
+    check();
+}
+
+async function check() {
+    const res = await fetch('/api/user/status', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({user_id:getUID()})});
+    const s = await res.json();
+    document.getElementById('st_em').className = `badge ${s.emerald?'ok':''}`; document.getElementById('st_em').innerText = s.emerald?'OK':'REQ';
+    document.getElementById('st_fr').className = `badge ${s.frlg?'ok':''}`; document.getElementById('st_fr').innerText = s.frlg?'OK':'REQ';
+    const rdy = s.emerald && s.frlg;
+    document.getElementById('btn-gen').disabled = !rdy;
+    document.getElementById('g-status').innerText = rdy ? "Prêt." : "Fichiers manquants.";
+}
+
+async function generate() {
+    const btn = document.getElementById('btn-gen'); btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> TRAITEMENT...'; btn.disabled = true;
+    const cfg = {emerald:{options:{}}, frlg:{options:{}}};
+    
+    // Extraction propre des données
+    ['emerald', 'frlg'].forEach(g => {
+        Object.keys(STATE[g]).forEach(cat => {
+            STATE[g][cat].forEach(f => {
+                const v = f.value !== undefined ? f.value : f.default;
+                if(f.id === 'name') cfg[g].name = v;
+                else cfg[g].options[f.id] = v;
+            });
+        });
+    });
+
+    try {
+        const res = await fetch('/api/generate', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({user_id:getUID(), config:cfg})});
+        const d = await res.json();
+        if(d.status === 'Success') {
+            document.getElementById('dl-link').href = d.download_url;
+            document.getElementById('overlay').style.display = 'flex';
+        } else alert("Erreur: " + d.error);
+    } catch(e) { alert("Erreur réseau"); }
+    finally { btn.innerHTML = 'LANCER LA FUSION'; btn.disabled = false; }
+}
+
+// Export/Import simplifié
+function exportConfig() {
+    const blob = new Blob([JSON.stringify(STATE, null, 2)], {type:'application/json'});
+    const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='celio_preset.json'; a.click();
+}
+function importConfig(el) {
+    const r = new FileReader();
+    r.onload = (e) => {
+        const d = JSON.parse(e.target.result);
+        ['emerald', 'frlg'].forEach(g => { if(d[g]) Object.assign(STATE[g], d[g]); });
+        renderForm(); alert("Config chargée.");
+    };
+    r.readAsText(el.files[0]);
+}
+
+// Init
+renderTabs(); renderForm(); check();
+</script>
+{% endblock %}

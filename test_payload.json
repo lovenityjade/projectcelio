@@ -1,0 +1,3 @@
+{
+  "yaml": "description: Test API Dynamique\nname: CelioUser\ngame: ChecksFinder\nChecksFinder:\n  progression_balancing: 50\n  accessibility: locations"
+}

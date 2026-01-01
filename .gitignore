@@ -1,0 +1,31 @@
+# --- ROMS (CRITIQUE : NE PAS ENLEVER) ---
+*.gba
+*.gbc
+*.nds
+*.bin
+core/*.gba
+data/users/**/*.gba
+
+# --- PYTHON & ENVIRONNEMENT ---
+__pycache__/
+*.pyc
+.env
+venv/
+env/
+
+# --- DONNÉES GÉNÉRÉES & UTILISATEURS ---
+# On ignore le contenu, mais on garde les dossiers
+data/seeds/*
+!data/seeds/.gitkeep
+data/yamls/*
+!data/yamls/.gitkeep
+data/users/*
+!data/users/.gitkeep
+
+# --- ARCHIPELAGO OUTPUTS ---
+output/
+players/
+
+# --- SYSTÈME ---
+.DS_Store
+Thumbs.db

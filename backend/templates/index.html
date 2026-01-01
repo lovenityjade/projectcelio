@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<header class="hero">
+    <h1>Project Celio</h1>
+    <p>Le Hub central pour vos randomizers Pokémon & Multiworld.</p>
+    <div style="margin-top: 2rem;">
+        <a href="/generator" class="btn-main">Créer une Seed</a>
+        <a href="/setup" class="btn-main" style="background: transparent; border: 1px solid rgba(255,255,255,0.2); margin-left: 1rem;">Comment jouer ?</a>
+    </div>
+</header>
+
+<div class="container">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: -4rem;">
+        
+        <div style="background: var(--bg-card); padding: 2rem; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(5px);">
+            <h3 style="color: var(--primary);"><i class="fa-solid fa-bolt"></i> Génération Instantanée</h3>
+            <p>Créez vos seeds Pokémon FRLG, Emerald et plus encore en quelques secondes grâce à notre infrastructure Cloud.</p>
+        </div>
+
+        <div style="background: var(--bg-card); padding: 2rem; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(5px);">
+            <h3 style="color: var(--secondary);"><i class="fa-solid fa-users"></i> Synchronisation</h3>
+            <p>Sauvegardez vos presets, partagez vos configurations et rejoignez des parties Multiworld sans prise de tête.</p>
+        </div>
+
+        <div style="background: var(--bg-card); padding: 2rem; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(5px);">
+            <h3 style="color: #4ade80;"><i class="fa-solid fa-code-branch"></i> Open Source</h3>
+            <p>Basé sur Archipelago, Project Celio est conçu pour être modulaire et évolutif.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

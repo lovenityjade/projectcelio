@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  # --- THE FACTORY (Backend API) ---
+  backend:
+    build: ./backend
+    container_name: celio_factory
+    restart: always
+    ports:
+      - "8081:5000" # Host 8080 -> Container 5000 (Flask)
+    volumes:
+      - ./backend:/app          # Hot-reload du code
+      - ./core:/core            # Accès au Core Archipelago
+      - ./data:/data            # Stockage des seeds
+    command: gunicorn -w 2 -b 0.0.0.0:5000 --timeout 300 app:app
+    env_file:
+      - .env
+    environment:
+      - FLASK_ENV=development
+      - CELIO_DB_HOST=host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # Permet de parler à la DB du VPS
